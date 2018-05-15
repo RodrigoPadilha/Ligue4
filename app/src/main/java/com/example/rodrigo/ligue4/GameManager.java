@@ -90,7 +90,7 @@ public class GameManager {
                     int lig = 0;
                     for (int hit = 0; hit < 4; hit++) {
                         boolean a = (j + hit) < limJ;           // Se a posição é menor que largura
-                        boolean b = true;                       // Se exixte possibilidade de ligar 4
+                        boolean b = true;                       // Se existe possibilidade de ligar 4
 
                         if (orientation == GameParameters.HORIZONTAL) {
                             line = i;

@@ -3,7 +3,6 @@ package com.example.rodrigo.ligue4.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -39,7 +38,9 @@ public class GameActivity extends AppCompatActivity {
 
         //INÍCIO
         dataReceive();
+        partsList();
         loadBoard();
+
 
         gridBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
@@ -49,13 +50,14 @@ public class GameActivity extends AppCompatActivity {
 
                     putCoinOnState(gameManager.getStackIndex(position));
 
-                    //TODO Analisar
-                    if(gameManager.hasWinner()) {
+                    if (gameManager.hasWinner()) {
                         String vencedor = "";
                         if (gameManager.getRound() == GameParameters.YELLOW_COIN)
                             vencedor = "AMARELO venceu";
                         if (gameManager.getRound() == GameParameters.RED_COIN)
                             vencedor = "VERMELHO venceu";
+
+                        //TODO Abrir Dialog Personalizada
                         Toast.makeText(GameActivity.this, vencedor, Toast.LENGTH_LONG).show();
                     }
 
@@ -65,7 +67,7 @@ public class GameActivity extends AppCompatActivity {
                     //gameManager.getRound();
 
                 } catch (InvalidMoveException e) {
-                    Toast.makeText(GameActivity.this, GameActivity.this.getString(R.string.message_invalid_move), Toast.LENGTH_LONG).show();
+                    Toast.makeText(GameActivity.this, GameActivity.this.getString(R.string.message_invalid_move), Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
 
@@ -78,6 +80,27 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putIntegerArrayList("boardPartsList", boardPartsList); // Salva lista de peças do Tabuleiro
+
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        // Verifica se o bundle existe, caso sim, você verifica se a lista de peças salvas
+        if (savedInstanceState != null && savedInstanceState.containsKey("boardPartsList")) {
+
+            boardPartsList = savedInstanceState.getIntegerArrayList("boardPartsList");  // Recupera o valor que estava anteriormente
+            loadBoard();                                                                    // Gera o Exibe o Tabulerio após virar a tela
+        }
+
+    }
+
     private void dataReceive() {
 
         Intent intent = getIntent();
@@ -85,21 +108,26 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
-    private void loadBoard() {
+    public void partsList() {
 
         boardPartsList = new ArrayList<>();
         for (int linha = 0; linha < GameParameters.QTD_LINE; linha++) {
             for (int coluna = 0; coluna < GameParameters.QTD_COLUMN; coluna++) {
-                //matriz em formato de lista
-                boardPartsList.add(0);
+
+                boardPartsList.add(0);  //matriz em formato de lista
             }
         }
+
+    }
+
+    private void loadBoard() {
+
+        gameManager = new GameManager(boardPartsList);
+
         gridBoard.setColumnWidth(GameParameters.QTD_LINE);    //linhas
         gridBoard.setNumColumns(GameParameters.QTD_COLUMN);    //colunas
         gridBoard.setAdapter(new StateAdapter(this, boardPartsList));
         gridBoard.setBackgroundColor(getResources().getColor(R.color.board_background));
-
-        gameManager = new GameManager(boardPartsList);
 
     }
 
@@ -108,12 +136,24 @@ public class GameActivity extends AppCompatActivity {
         //TODO Efeito de moeda caindo
         if (gameManager.getRound() == 1) {
             boardPartsList.set(position, GameParameters.YELLOW_COIN);   // Coloca Moeda Amarela na célula
-//            gameManager.setRound(gameManager.getRound() + 1);       // Passa a vez
         } else {
             boardPartsList.set(position, GameParameters.RED_COIN);      // Coloca Moeda Vermelha na célula
-//            gameManager.setRound(gameManager.getRound() - 1);       // Passa a vez
         }
 
         gridBoard.setAdapter(new StateAdapter(GameActivity.this, boardPartsList));
     }
+
+    public void newGame(View view){
+
+        partsList();
+        loadBoard();
+
+    }
+
+    public void back(View view){
+
+        finish();
+
+    }
+
 }
