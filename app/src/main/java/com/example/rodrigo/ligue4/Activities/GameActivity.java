@@ -3,9 +3,12 @@ package com.example.rodrigo.ligue4.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.FrameLayout;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.rodrigo.ligue4.Adapters.StateAdapter;
@@ -24,6 +27,7 @@ public class GameActivity extends AppCompatActivity {
 
     //private static final String TESTE = "TESTE";
 
+    private FrameLayout scoreboard;
     private GridView gridBoard;
     private int gameModeOpt;
     private ArrayList<Integer> boardPartsList;
@@ -34,13 +38,33 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        gridBoard = findViewById(R.id.id_tabuleiro);
+        scoreboard = findViewById(R.id.id_scoreboard);
+        gridBoard = findViewById(R.id.id_game_board);
+
+        //View view = LayoutInflater.from(this).inflate(R.layout.scoreboard, scoreboard,true);
+        View view = LayoutInflater.from(this).inflate(R.layout.scoreboard, null);
+        scoreboard.addView(view);
 
         //INÍCIO
         dataReceive();
         partsList();
         loadBoard();
 
+
+        view.findViewById(R.id.btnNewGame).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                partsList();
+                loadBoard();
+            }
+        });
+
+        view.findViewById(R.id.btnBack).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
 
         gridBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
@@ -141,19 +165,6 @@ public class GameActivity extends AppCompatActivity {
         }
 
         gridBoard.setAdapter(new StateAdapter(GameActivity.this, boardPartsList));
-    }
-
-    public void newGame(View view){
-
-        partsList();
-        loadBoard();
-
-    }
-
-    public void back(View view){
-
-        finish();
-
     }
 
 }
