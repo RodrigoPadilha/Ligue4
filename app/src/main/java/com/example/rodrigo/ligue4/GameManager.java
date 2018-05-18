@@ -1,5 +1,6 @@
 package com.example.rodrigo.ligue4;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -7,11 +8,13 @@ import java.util.Random;
  * Created by rodrigo on 28/04/2018.
  */
 
-public class GameManager {
+public class GameManager implements Serializable{
 
     private static final String TESTE = "TESTE";
 
     private int round;
+    private int yellowWins;
+    private int redWins;
     private ArrayList<Integer> boardPartsList;
     private Integer[][] matrixBidirecional;
 
@@ -86,7 +89,7 @@ public class GameManager {
 
                 int line = n * j + (1 - n) * i;
                 int column = n * i + (1 - n) * j;
-                if(matrixBidirecional[line][column] == round) { // Verifica apenas as peças do jogador que fez último movimento
+                if (matrixBidirecional[line][column] == round) { // Verifica apenas as peças do jogador que fez último movimento
                     int lig = 0;
                     for (int hit = 0; hit < 4; hit++) {
                         boolean a = (j + hit) < limJ;           // Se a posição é menor que largura
@@ -134,6 +137,18 @@ public class GameManager {
         }
     }
 
+    public void addScore() {
+
+        if (round == GameParameters.YELLOW_COIN)
+            yellowWins += 1;
+        else if (round == GameParameters.RED_COIN)
+            redWins += 1;
+    }
+
+    public void setBoardPartsList(ArrayList<Integer> boardPartsList) {
+        this.boardPartsList = boardPartsList;
+    }
+
     public int getRound() {
         return round;
     }
@@ -142,5 +157,11 @@ public class GameManager {
         this.round = round;
     }
 
+    public int getYellowWins() {
+        return yellowWins;
+    }
 
+    public int getRedWins() {
+        return redWins;
+    }
 }
