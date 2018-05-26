@@ -21,7 +21,6 @@ import com.example.rodrigo.ligue4.R;
 public class ScoreBoardDialog extends DialogFragment{
 
     private static final String TESTE = "TESTE";
-    private static ScoreBoardDialog uniqueInstance;
     private OptionsDialogIntf classCallBack;
     private int yellowWins;
     private int redWins;
@@ -54,7 +53,6 @@ public class ScoreBoardDialog extends DialogFragment{
         Log.i(TESTE,"onCreateView");
 
         View view = inflater.inflate(R.layout.scoreboard, container);
-        //builder = new AlertDialog.Builder((Context) classCallBack);
 
         Button btnNewGame = view.findViewById(R.id.btnNewGame);
         Button btnBack = view.findViewById(R.id.btnBack);
@@ -69,6 +67,7 @@ public class ScoreBoardDialog extends DialogFragment{
             @Override
             public void onClick(View view) {
                 classCallBack.dialogAnswer(0);
+                dismiss();
             }
         });
 

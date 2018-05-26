@@ -62,6 +62,7 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         view.findViewById(R.id.btnNewGame).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                gridBoard.setEnabled(true);
                 newGame();
             }
         });
@@ -81,16 +82,10 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
 
                     putCoinOnState(gameManager.getStackIndex(position));
                     gameManager.scanMatrix();
-
-                    //ToDo Bug: após achar vencedor e exibir Dialog, Se mudar orientação coloca peça
                     if (gameManager.isWinner()) {
-
-                        gridBoard.setEnabled(false);
                         updateScoreBoard();
                         openScoreBoardDialog();
-
                     }
-
                     gameManager.changeRound();
 
                 } catch (InvalidMoveException e) {
@@ -112,12 +107,7 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         super.onSaveInstanceState(outState);
 
         outState.putIntegerArrayList("boardPartsList", boardPartsList); // Salva lista de peças do Tabuleiro
-        outState.putSerializable("gameManager", gameManager); // Salva controlador do game
-
-        if (scoreBoardDialog != null) {
-            scoreBoardDialog = null;
-            outState.putString("scoreBoardDialog", "scoreBoardDialog"); // Salva controlador do game
-        }
+        outState.putSerializable("gameManager", gameManager);           // Salva controlador do game
 
     }
 
@@ -128,12 +118,11 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         // Verifica se o bundle existe, caso sim, você verifica se a lista de peças salvas
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey("boardPartsList")) {
-                boardPartsList = savedInstanceState.getIntegerArrayList("boardPartsList");  // Recupera o valor que estava anteriormente
+                boardPartsList = savedInstanceState.getIntegerArrayList("boardPartsList");      // Recupera o valor que estava anteriormente
                 gameManager = (GameManager) savedInstanceState.getSerializable("gameManager");  // Recupera o valor que estava anteriormente
-                loadBoard();                                                                     // Gera o Exibe o Tabulerio após virar a tela
+                loadBoard();                                                                        // Gera o Exibe o Tabulerio após virar a tela
             }
-            if (savedInstanceState.containsKey("scoreBoardDialog")) {
-                savedInstanceState.remove("scoreBoardDialog");
+            if(gameManager.isWinner()) {
                 openScoreBoardDialog();
             }
         }
@@ -151,6 +140,7 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
 
         partsList();
         loadBoard();
+
     }
 
     public void partsList() {
@@ -172,27 +162,13 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         else
             gameManager.setBoardPartsList(boardPartsList);
 
-        gameManager.setWinner(false);
-
         yellowScore.setText(Integer.toString(gameManager.getYellowWins()));
         redScore.setText(Integer.toString(gameManager.getRedWins()));
 
-        gridBoard.setColumnWidth(GameParameters.QTD_LINE);    //linhas
-        gridBoard.setNumColumns(GameParameters.QTD_COLUMN);    //colunas
+        gridBoard.setColumnWidth(GameParameters.QTD_LINE);
+        gridBoard.setNumColumns(GameParameters.QTD_COLUMN);
         gridBoard.setAdapter(new StateAdapter(this, boardPartsList));
         gridBoard.setBackgroundColor(getResources().getColor(R.color.board_background));
-/*
-        if (gameManager.scanMatrix()) {
-            gridBoard.setEnabled(false);
-        } else {
-            gridBoard.setEnabled(true);
-        }
-  */
-        if(gameManager.isWinner()){
-            gridBoard.setEnabled(false);
-        } else {
-            gridBoard.setEnabled(true);
-        }
 
     }
 
@@ -219,7 +195,11 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
 
     private void openScoreBoardDialog() {
 
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        scoreBoardDialog = new ScoreBoardDialog();
+
         Bundle args = new Bundle();
+
         args.putSerializable("classCallBack", GameActivity.this);
         args.putInt("yellowWins(", gameManager.getYellowWins());
         args.putInt("redWins", gameManager.getRedWins());
@@ -228,22 +208,10 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         if (gameManager.getRound() == GameParameters.RED_COIN)
             args.putString("winner", getString(R.string.lbl_red_player));
 
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        scoreBoardDialog = new ScoreBoardDialog();
         scoreBoardDialog.setArguments(args);
         scoreBoardDialog.show(ft, "scoreBoardDialog");
 
-    }
-
-    private void closeScoreBoardDialog() {
-
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        scoreBoardDialog = (ScoreBoardDialog) getSupportFragmentManager().findFragmentByTag("scoreBoardDialog");
-        if (scoreBoardDialog != null) {
-            scoreBoardDialog.dismiss();
-            ft.remove(scoreBoardDialog);
-            scoreBoardDialog = null;
-        }
+        gridBoard.setEnabled(false);
 
     }
 
@@ -251,12 +219,13 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
     public void dialogAnswer(Integer response) {
 
         if (response == 0) {
+            gameManager.setWinner(false);
+            gridBoard.setEnabled(true);
             newGame();
         } else {
             finish();
         }
 
-        closeScoreBoardDialog();
     }
 
 }
