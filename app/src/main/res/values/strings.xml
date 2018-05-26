@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Ligue 4</string>
     <string name="lbl_mode_game">Modo de jogo</string>
+
     <string name="lbl_vs_machine">Vs Máquina</string>
     <string name="lbl_vs_friend">Vs Amigo</string>
     <string name="lbl_play">JOGAR</string>
@@ -9,6 +10,10 @@
     <string name="lbl_new_game">Novo Jogo</string>
     <string name="lbl_back">Voltar</string>
 
+    <string name="lbl_red_player">Vermelho</string>
+    <string name="lbl_yellow_player">Amarelo</string>
+
     <string name="message_invalid_move">Movimento inválido</string>
+    <string name="message_winner">é o Vencedor!!!</string>
 
 </resources>

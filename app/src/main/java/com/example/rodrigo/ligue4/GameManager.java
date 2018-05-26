@@ -13,6 +13,7 @@ public class GameManager implements Serializable{
     private static final String TESTE = "TESTE";
 
     private int round;
+    boolean winner;
     private int yellowWins;
     private int redWins;
     private ArrayList<Integer> boardPartsList;
@@ -46,9 +47,9 @@ public class GameManager implements Serializable{
         return position;
     }
 
-    public boolean hasWinner() {
+    public void scanMatrix() {
 
-        boolean winner = false;
+        winner = false;
 
         convertListToMatrix();
 
@@ -56,8 +57,6 @@ public class GameManager implements Serializable{
         winner = winner || searchWinner(GameParameters.VERTICAL);
         winner = winner || searchWinner(GameParameters.DIAGONAL_RIGTH);
         winner = winner || searchWinner(GameParameters.DIAGONAL_LEFT);
-
-        return winner;
 
     }
 
@@ -89,11 +88,11 @@ public class GameManager implements Serializable{
 
                 int line = n * j + (1 - n) * i;
                 int column = n * i + (1 - n) * j;
-                if (matrixBidirecional[line][column] == round) { // Verifica apenas as peças do jogador que fez último movimento
+                if (matrixBidirecional[line][column] == round) {                                                            // Verifica apenas as peças do jogador que fez último movimento
                     int lig = 0;
                     for (int hit = 0; hit < 4; hit++) {
-                        boolean a = (j + hit) < limJ;           // Se a posição é menor que largura
-                        boolean b = true;                       // Se existe possibilidade de ligar 4
+                        boolean validationA = (j + hit) < limJ;                                                             // Se a posição é menor que largura
+                        boolean validationB = true;                                                                         // Se existe possibilidade de ligar 4
 
                         if (orientation == GameParameters.HORIZONTAL) {
                             line = i;
@@ -102,17 +101,17 @@ public class GameManager implements Serializable{
                             line = j + hit;
                             column = i;
                         } else if (orientation == GameParameters.DIAGONAL_RIGTH) {
-                            b = (i + hit) < limI;
+                            validationB = (i + hit) < limI;
                             line = i + hit;
                             column = j + hit;
                         } else if (orientation == GameParameters.DIAGONAL_LEFT) {
-                            a = (j - hit) >= 0;
-                            b = (i + hit) < limI;
+                            validationA = (j - hit) >= 0;
+                            validationB= (i + hit) < limI;
                             line = j - hit;
                             column = i + hit;
                         }
 
-                        if (a && b && matrixBidirecional[line][column] == round) {
+                        if (validationA && validationB && matrixBidirecional[line][column] == round) {
                             lig++;
                             if (lig >= 4)
                                 return true;
@@ -155,6 +154,14 @@ public class GameManager implements Serializable{
 
     public void setRound(int round) {
         this.round = round;
+    }
+
+    public boolean isWinner() {
+        return winner;
+    }
+
+    public void setWinner(boolean winner) {
+        this.winner = winner;
     }
 
     public int getYellowWins() {

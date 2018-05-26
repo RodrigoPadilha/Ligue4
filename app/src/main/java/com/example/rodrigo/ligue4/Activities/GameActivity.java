@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,7 +14,7 @@ import android.widget.Toast;
 
 import com.example.rodrigo.ligue4.Adapters.StateAdapter;
 import com.example.rodrigo.ligue4.Dialogs.OptionsDialogIntf;
-import com.example.rodrigo.ligue4.Dialogs.TestDialog;
+import com.example.rodrigo.ligue4.Dialogs.ScoreBoardDialog;
 import com.example.rodrigo.ligue4.GameManager;
 import com.example.rodrigo.ligue4.GameParameters;
 import com.example.rodrigo.ligue4.InvalidMoveException;
@@ -40,15 +39,13 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
     private int gameModeOpt;
     private ArrayList<Integer> boardPartsList;
     private GameManager gameManager;
-    private TestDialog testDialog;
-    //private ScoreBoardDialog scoreBoardDialog;
+    private ScoreBoardDialog scoreBoardDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        //View view = LayoutInflater.from(this).inflate(R.layout.scoreboard, scoreboard,true);
         final View view = LayoutInflater.from(this).inflate(R.layout.scoreboard, null);
 
         scoreboard = findViewById(R.id.id_scoreboard);
@@ -83,27 +80,13 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
                 try {
 
                     putCoinOnState(gameManager.getStackIndex(position));
+                    gameManager.scanMatrix();
 
-                    if (gameManager.hasWinner()) {
-                        String vencedor = "";
-                        if (gameManager.getRound() == GameParameters.YELLOW_COIN)
-                            vencedor = "AMARELO venceu";
-                        if (gameManager.getRound() == GameParameters.RED_COIN)
-                            vencedor = "VERMELHO venceu";
+                    //ToDo Bug: após achar vencedor e exibir Dialog, Se mudar orientação coloca peça
+                    if (gameManager.isWinner()) {
 
                         gridBoard.setEnabled(false);
-                        // Incrementa Placar
-                        gameManager.addScore();
-                        yellowScore.setText(Integer.toString(gameManager.getYellowWins()));
-                        redScore.setText(Integer.toString(gameManager.getRedWins()));
-                        Toast.makeText(GameActivity.this, vencedor, Toast.LENGTH_LONG).show();
-
-                        //TODO Abrir Dialog Personalizada
-                        //scoreBoardDialog = new ScoreBoardDialog(GameActivity.this, gameManager.getYellowWins(), gameManager.getRedWins());
-
-//                        TestDialog testDialog = TestDialog.newInstance(GameActivity.this, gameManager.getYellowWins(), gameManager.getRedWins());
-//                        testDialog.show(getSupportFragmentManager(),"RODRIGO");
-
+                        updateScoreBoard();
                         openScoreBoardDialog();
 
                     }
@@ -131,9 +114,10 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         outState.putIntegerArrayList("boardPartsList", boardPartsList); // Salva lista de peças do Tabuleiro
         outState.putSerializable("gameManager", gameManager); // Salva controlador do game
 
-//        if(testDialog != null) {
-//            outState.putSerializable("testDialog", (Serializable) getSupportFragmentManager().findFragmentByTag("RODRIGO")); // Salva controlador do game
-//        }
+        if (scoreBoardDialog != null) {
+            scoreBoardDialog = null;
+            outState.putString("scoreBoardDialog", "scoreBoardDialog"); // Salva controlador do game
+        }
 
     }
 
@@ -143,15 +127,15 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
 
         // Verifica se o bundle existe, caso sim, você verifica se a lista de peças salvas
         if (savedInstanceState != null) {
-
-            if(savedInstanceState.containsKey("boardPartsList")) {
+            if (savedInstanceState.containsKey("boardPartsList")) {
                 boardPartsList = savedInstanceState.getIntegerArrayList("boardPartsList");  // Recupera o valor que estava anteriormente
                 gameManager = (GameManager) savedInstanceState.getSerializable("gameManager");  // Recupera o valor que estava anteriormente
-                loadBoard();                                                                    // Gera o Exibe o Tabulerio após virar a tela
+                loadBoard();                                                                     // Gera o Exibe o Tabulerio após virar a tela
             }
-//            if(savedInstanceState.containsKey("testDialog")){
-//                testDialog = (TestDialog) savedInstanceState.getSerializable("testDialog");
-//            }
+            if (savedInstanceState.containsKey("scoreBoardDialog")) {
+                savedInstanceState.remove("scoreBoardDialog");
+                openScoreBoardDialog();
+            }
         }
 
     }
@@ -163,11 +147,10 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
 
     }
 
-    private void newGame(){
+    private void newGame() {
 
         partsList();
         loadBoard();
-
     }
 
     public void partsList() {
@@ -184,10 +167,12 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
 
     private void loadBoard() {
 
-        if(gameManager == null)
+        if (gameManager == null)
             gameManager = new GameManager(boardPartsList);
         else
             gameManager.setBoardPartsList(boardPartsList);
+
+        gameManager.setWinner(false);
 
         yellowScore.setText(Integer.toString(gameManager.getYellowWins()));
         redScore.setText(Integer.toString(gameManager.getRedWins()));
@@ -196,12 +181,22 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         gridBoard.setNumColumns(GameParameters.QTD_COLUMN);    //colunas
         gridBoard.setAdapter(new StateAdapter(this, boardPartsList));
         gridBoard.setBackgroundColor(getResources().getColor(R.color.board_background));
-        gridBoard.setEnabled(true);
+/*
+        if (gameManager.scanMatrix()) {
+            gridBoard.setEnabled(false);
+        } else {
+            gridBoard.setEnabled(true);
+        }
+  */
+        if(gameManager.isWinner()){
+            gridBoard.setEnabled(false);
+        } else {
+            gridBoard.setEnabled(true);
+        }
 
     }
 
-    private void
-    putCoinOnState(int position) {
+    private void putCoinOnState(int position) {
 
         //TODO Efeito de moeda caindo
         if (gameManager.getRound() == 1) {
@@ -211,32 +206,43 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
         }
 
         gridBoard.setAdapter(new StateAdapter(GameActivity.this, boardPartsList));
+
     }
 
-    private void openScoreBoardDialog(){
+    private void updateScoreBoard() {
 
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        testDialog = new TestDialog();
+        gameManager.addScore();
+        yellowScore.setText(Integer.toString(gameManager.getYellowWins()));
+        redScore.setText(Integer.toString(gameManager.getRedWins()));
+
+    }
+
+    private void openScoreBoardDialog() {
 
         Bundle args = new Bundle();
-
         args.putSerializable("classCallBack", GameActivity.this);
         args.putInt("yellowWins(", gameManager.getYellowWins());
         args.putInt("redWins", gameManager.getRedWins());
+        if (gameManager.getRound() == GameParameters.YELLOW_COIN)
+            args.putString("winner", getString(R.string.lbl_yellow_player));
+        if (gameManager.getRound() == GameParameters.RED_COIN)
+            args.putString("winner", getString(R.string.lbl_red_player));
 
-        testDialog.setArguments(args);
-        testDialog.show(ft,"RODRIGO");
-        Log.i("TESTE","RODRIGO");
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        scoreBoardDialog = new ScoreBoardDialog();
+        scoreBoardDialog.setArguments(args);
+        scoreBoardDialog.show(ft, "scoreBoardDialog");
 
     }
 
-    private void closeScoreBoardDialog(){
+    private void closeScoreBoardDialog() {
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        testDialog = (TestDialog) getSupportFragmentManager().findFragmentByTag("RODRIGO");
-        if(testDialog != null) {
-            testDialog.dismiss();
-            ft.remove(testDialog);
+        scoreBoardDialog = (ScoreBoardDialog) getSupportFragmentManager().findFragmentByTag("scoreBoardDialog");
+        if (scoreBoardDialog != null) {
+            scoreBoardDialog.dismiss();
+            ft.remove(scoreBoardDialog);
+            scoreBoardDialog = null;
         }
 
     }
@@ -244,12 +250,13 @@ public class GameActivity extends AppCompatActivity implements OptionsDialogIntf
     @Override
     public void dialogAnswer(Integer response) {
 
-        if(response == 0) {
+        if (response == 0) {
             newGame();
-        } else{
+        } else {
             finish();
         }
 
         closeScoreBoardDialog();
     }
+
 }
